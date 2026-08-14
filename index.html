@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuadratura — Herramientas para contadores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16233D;
+    --ink-soft:#3C4A63;
+    --paper:#EEF1EC;
+    --paper-line:#D6DBD2;
+    --card:#FFFFFF;
+    --seal:#B5652C;
+    --seal-soft:#F0DFCF;
+    --verified:#1F7A4D;
+    --verified-soft:#DCEBE1;
+    --slate:#6A7280;
+    --danger:#A23B33;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px);
+    background-size: 100% 42px;
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:920px; margin:0 auto; padding:48px 24px 80px; }
+
+  header.top{ margin-bottom:36px; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--seal);
+    margin-bottom:10px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:40px;
+    letter-spacing:-0.01em;
+    margin:0 0 8px;
+  }
+  .sub{ color:var(--ink-soft); font-size:15px; max-width:52ch; line-height:1.5; }
+
+  nav.tabs{
+    display:flex; gap:2px; margin:32px 0 0;
+    border-bottom:1px solid var(--paper-line);
+  }
+  .tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:.04em;
+    padding:12px 18px;
+    color:var(--slate);
+    background:transparent;
+    border:none;
+    border-bottom:2px solid transparent;
+    cursor:pointer;
+    display:flex; align-items:center; gap:8px;
+  }
+  .tab .n{ opacity:.55; }
+  .tab.active{ color:var(--ink); border-bottom-color:var(--seal); }
+  .tab.disabled{ color:#AEB4A9; cursor:default; }
+  .tab .soon{
+    font-size:9px; background:var(--paper-line); color:var(--ink-soft);
+    padding:2px 6px; border-radius:10px; letter-spacing:.06em;
+  }
+
+  section.panel{ display:none; padding-top:36px; }
+  section.panel.active{ display:block; }
+
+  .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:28px; }
+  @media (max-width:720px){ .grid{ grid-template-columns:1fr; } }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--paper-line);
+    border-radius:var(--radius);
+    padding:28px;
+  }
+  .card h2{
+    font-family:'Fraunces', serif;
+    font-size:19px; font-weight:600; margin:0 0 4px;
+  }
+  .card .hint{ color:var(--slate); font-size:13px; margin:0 0 22px; line-height:1.5;}
+
+  label{
+    display:block; font-size:12px; color:var(--ink-soft);
+    margin-bottom:6px; font-weight:500;
+  }
+  .field{ margin-bottom:18px; }
+  .field .row{ display:flex; align-items:center; gap:8px; }
+  input[type=number], select{
+    width:100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:15px;
+    padding:10px 12px;
+    border:1px solid var(--paper-line);
+    border-radius:var(--radius);
+    background:#FCFCFB;
+    color:var(--ink);
+  }
+  input[type=number]:focus, select:focus{
+    outline:none; border-color:var(--seal);
+    box-shadow:0 0 0 3px var(--seal-soft);
+  }
+  .toggle{
+    display:inline-flex; border:1px solid var(--paper-line); border-radius:20px; overflow:hidden;
+    font-family:'IBM Plex Mono', monospace; font-size:11px;
+  }
+  .toggle button{
+    border:none; background:#FCFCFB; color:var(--slate);
+    padding:6px 12px; cursor:pointer;
+  }
+  .toggle button.on{ background:var(--ink); color:#fff; }
+
+  .ledger{ font-family:'IBM Plex Mono', monospace; font-size:14px; }
+  .ledger .line{
+    display:flex; justify-content:space-between;
+    padding:9px 0; border-bottom:1px dashed var(--paper-line);
+  }
+  .ledger .line .k{ color:var(--ink-soft); }
+  .ledger .line .v{ font-weight:500; }
+  .ledger .line.total{
+    border-bottom:none; border-top:2px solid var(--ink);
+    margin-top:6px; padding-top:14px; font-size:16px;
+  }
+  .ledger .line.total .v{ font-weight:600; }
+  .ledger .line.remanente .v{ color:var(--verified); }
+  .ledger .line.pagar .v{ color:var(--danger); }
+
+  .stamp{
+    margin-top:22px; display:flex; align-items:center; gap:12px;
+    opacity:0; transform:rotate(-6deg) scale(.9);
+    transition:opacity .35s ease, transform .35s ease;
+  }
+  .stamp.show{ opacity:1; transform:rotate(-6deg) scale(1); }
+  .stamp .badge{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px; letter-spacing:.08em;
+    border:2px solid var(--verified);
+    color:var(--verified);
+    padding:6px 10px;
+    border-radius:3px;
+    text-transform:uppercase;
+  }
+  .stamp .note{ font-size:12px; color:var(--slate); }
+
+  .converter{ margin-top:44px; }
+  .converter .card{ display:grid; grid-template-columns: 1.1fr 1fr 1fr; gap:20px; align-items:end;}
+  @media (max-width:720px){ .converter .card{ grid-template-columns:1fr; } }
+  .converter .result-mini{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:20px; font-weight:600;
+  }
+  .converter .result-mini .lbl{
+    display:block; font-family:'Inter'; font-weight:500;
+    font-size:11px; color:var(--slate); margin-bottom:4px;
+  }
+
+  footer.roadmap{
+    margin-top:56px; padding-top:24px; border-top:1px solid var(--paper-line);
+    font-size:12.5px; color:var(--slate); line-height:1.6;
+  }
+  footer.roadmap b{ color:var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">Herramientas para contadores · Chile</div>
+    <h1>Cuadratura</h1>
+    <p class="sub">Cálculos contables tributarios de uso diario, resueltos al segundo — sin reemplazar el criterio del contador, solo el tiempo que pierde calculando a mano.</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="iva"><span class="n">01</span> IVA / F29</button>
+    <button class="tab disabled" disabled><span class="n">02</span> Asientos <span class="soon">próximamente</span></button>
+    <button class="tab disabled" disabled><span class="n">03</span> Remuneraciones <span class="soon">próximamente</span></button>
+  </nav>
+
+  <!-- MÓDULO 1: IVA / F29 -->
+  <section class="panel active" id="panel-iva">
+
+    <div class="grid">
+      <div class="card">
+        <h2>Estimador F29 mensual</h2>
+        <p class="hint">Ingresa los totales netos del periodo. El cálculo no reemplaza el Registro de Compras y Ventas del SII, es una estimación rápida para revisar antes de declarar.</p>
+
+        <div class="field">
+          <label for="ventas">Ventas netas del mes (CLP)</label>
+          <input type="number" id="ventas" placeholder="0" min="0" oninput="calcularF29()">
+        </div>
+        <div class="field">
+          <label for="compras">Compras netas del mes (CLP)</label>
+          <input type="number" id="compras" placeholder="0" min="0" oninput="calcularF29()">
+        </div>
+        <div class="field">
+          <label for="ppm">Tasa PPM (%)</label>
+          <input type="number" id="ppm" placeholder="ej. 0,25" min="0" step="0.01" oninput="calcularF29()">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Detalle</h2>
+        <p class="hint">Desglose línea por línea, como el mayor.</p>
+        <div class="ledger">
+          <div class="line"><span class="k">IVA Débito Fiscal (19%)</span><span class="v" id="out-debito">$ 0</span></div>
+          <div class="line"><span class="k">IVA Crédito Fiscal (19%)</span><span class="v" id="out-credito">$ 0</span></div>
+          <div class="line"><span class="k">PPM del periodo</span><span class="v" id="out-ppm">$ 0</span></div>
+          <div class="line total" id="out-resultado-line"><span class="k" id="out-resultado-label">A pagar</span><span class="v" id="out-resultado">$ 0</span></div>
+        </div>
+        <div class="stamp" id="stamp">
+          <span class="badge" id="stamp-text">Cuadrado</span>
+          <span class="note" id="stamp-note">Débito y crédito verificados.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="converter">
+      <div class="card">
+        <div>
+          <h2>Conversor rápido Neto / IVA / Total</h2>
+          <p class="hint">Para una sola línea o ítem — sin guardar nada, solo despejar el número que falta.</p>
+        </div>
+        <div>
+          <label for="conv-input">Monto conocido</label>
+          <input type="number" id="conv-input" placeholder="0" min="0" oninput="calcularConversor()">
+          <div class="toggle" style="margin-top:10px;">
+            <button id="btn-neto" class="on" onclick="setConvMode('neto')">Es neto</button>
+            <button id="btn-total" onclick="setConvMode('total')">Es total c/IVA</button>
+          </div>
+        </div>
+        <div>
+          <div class="result-mini"><span class="lbl">Neto</span><span id="conv-neto">$ 0</span></div>
+          <div class="result-mini" style="margin-top:14px;"><span class="lbl">IVA (19%)</span><span id="conv-iva">$ 0</span></div>
+          <div class="result-mini" style="margin-top:14px;"><span class="lbl">Total</span><span id="conv-total">$ 0</span></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <footer class="roadmap">
+    <b>En construcción, por partes:</b> este es el primer módulo (IVA/F29). Los siguientes en orden serán <b>02 · Generador de asientos contables</b> (armar el Debe/Haber automáticamente a partir de una transacción) y <b>03 · Calculadora de remuneraciones</b> (sueldo líquido, AFP, salud, seguro cesantía). Cada uno se agregará como pestaña nueva sin tocar lo ya construido.
+  </footer>
+
+</div>
+
+<script>
+  const fmt = new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
+
+  function calcularF29(){
+    const ventas = parseFloat(document.getElementById('ventas').value) || 0;
+    const compras = parseFloat(document.getElementById('compras').value) || 0;
+    const ppmTasa = parseFloat(document.getElementById('ppm').value) || 0;
+
+    const debito = ventas * 0.19;
+    const credito = compras * 0.19;
+    const ppm = ventas * (ppmTasa / 100);
+    const ivaNeto = debito - credito;
+    const resultado = ivaNeto + ppm;
+
+    document.getElementById('out-debito').textContent = fmt.format(debito);
+    document.getElementById('out-credito').textContent = fmt.format(credito);
+    document.getElementById('out-ppm').textContent = fmt.format(ppm);
+
+    const line = document.getElementById('out-resultado-line');
+    const label = document.getElementById('out-resultado-label');
+    const out = document.getElementById('out-resultado');
+    line.classList.remove('remanente','pagar');
+
+    if (resultado < 0){
+      label.textContent = 'Remanente crédito fiscal';
+      out.textContent = fmt.format(Math.abs(resultado));
+      line.classList.add('remanente');
+    } else {
+      label.textContent = 'A pagar';
+      out.textContent = fmt.format(resultado);
+      line.classList.add('pagar');
+    }
+
+    const stamp = document.getElementById('stamp');
+    const stampText = document.getElementById('stamp-text');
+    const stampNote = document.getElementById('stamp-note');
+    if (ventas > 0 || compras > 0){
+      stamp.classList.add('show');
+      if (resultado < 0){
+        stampText.textContent = 'A favor';
+        stampNote.textContent = 'Queda remanente para el próximo periodo.';
+      } else {
+        stampText.textContent = 'Cuadrado';
+        stampNote.textContent = 'Débito, crédito y PPM verificados.';
+      }
+    } else {
+      stamp.classList.remove('show');
+    }
+  }
+
+  let convMode = 'neto';
+  function setConvMode(mode){
+    convMode = mode;
+    document.getElementById('btn-neto').classList.toggle('on', mode==='neto');
+    document.getElementById('btn-total').classList.toggle('on', mode==='total');
+    calcularConversor();
+  }
+
+  function calcularConversor(){
+    const val = parseFloat(document.getElementById('conv-input').value) || 0;
+    let neto, iva, total;
+    if (convMode === 'neto'){
+      neto = val; iva = neto * 0.19; total = neto + iva;
+    } else {
+      total = val; neto = total / 1.19; iva = total - neto;
+    }
+    document.getElementById('conv-neto').textContent = fmt.format(neto);
+    document.getElementById('conv-iva').textContent = fmt.format(iva);
+    document.getElementById('conv-total').textContent = fmt.format(total);
+  }
+
+  calcularF29();
+  calcularConversor();
+</script>
+</body>
+</html>
