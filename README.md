@@ -1,2 +1,2 @@
-# herramienta-contadores
+# Herramienta-Contadores
 Diseño y desarrollo de una herramienta para automatizar cálculos y procesos manuales de contadores.
